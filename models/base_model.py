@@ -16,7 +16,7 @@ class BaseModel:
                     val = datetime.strptime(kwargs["created_at"],"%Y-%m-%dT%H:%M:%S.%f")
                 if key == "updated_at":
                     val = datetime.strptime(kwargs["updated_at"],"%Y-%m-%dT%H:%M:%S.%f")
-        if "__class__" not in key:
+            if "__class__" not in key:
             setattr(self, key, val)
 
     def __str__(self):
