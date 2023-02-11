@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-"""This modules defines a base class for all models in our hbnb clone"""
+"""This modules defines the parent class to all classes in our hbnb clone"""
 from uuid import uuid4
 from datetime import datetime
 
 class BaseModel:
-    """A base class for all hbnb models"""
+    """A parent class for all hbnb models"""
     def __init__(self, *args, **kwargs):
         """Instantiates a new model"""
         self.id = str(uuid4())
@@ -24,4 +24,15 @@ class BaseModel:
         dictt = self.to_dict()
         cls = str(type(self)).split('.')[-1].split('\'')[0]
         return "[{:s}] ({:s}) {}".format(cls, self.id, dictt)
-                        
+        
+	def save(self):
+		"""Updates the current time"""
+		self.updated_at = datetime.utcnow()
+
+	def to dict(self:)
+		"""Returns dictionary all keys of __dict__ of the instance"""
+		dic = self.__dict__.copy()
+		dic["created_at"] self.created_at.isoformat()
+		dic["updated_at"] =self.updated_at.isoformat()
+		dic["__class__"] = self.__class__.__name__
+		return dic
