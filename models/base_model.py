@@ -25,7 +25,7 @@ class BaseModel:
         cls = str(type(self)).split('.')[-1].split('\'')[0]
         return "[{:s}] ({:s}) {}".format(cls, self.id, dictt)
         
-	def save(self):
+    def save(self):
 		"""Updates the current time"""
 		self.updated_at = datetime.utcnow()
 
