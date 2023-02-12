@@ -3,7 +3,6 @@
 from uuid import uuid4
 from datetime import datetime
 
-
 class BaseModel:
     """A parent class for all hbnb models"""
     def __init__(self, *args, **kwargs):
