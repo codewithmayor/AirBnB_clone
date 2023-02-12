@@ -11,6 +11,8 @@ class BaseModel:
         self.id = str(uuid4())
         self.created_at = datetime.utcnow()
         self.updated_at = self.created_at
+		models.storage.new(self)
+
         if kwargs:
             for key, val in kwargs.items():
                 if key == "created_at":
@@ -29,8 +31,9 @@ class BaseModel:
         return "[{:s}] ({:s}) {}".format(cls, self.id, dictt)
 
     def save(self):
-        """Updates the current time"""
+        """Updates the current time and to file storage"""
         self.updated_at = datetime.utcnow()
+		models.storage.save()
 
     def to_dict(self):
         """Returns dictionary all keys of __dict__ of the instance"""
