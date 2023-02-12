@@ -26,13 +26,13 @@ class BaseModel:
         return "[{:s}] ({:s}) {}".format(cls, self.id, dictt)
         
     def save(self):
-		"""Updates the current time"""
-		self.updated_at = datetime.utcnow()
+        """Updates the current time"""
+        self.updated_at = datetime.utcnow()
 
-	def to dict(self:)
-		"""Returns dictionary all keys of __dict__ of the instance"""
-		dic = self.__dict__.copy()
-		dic["created_at"] self.created_at.isoformat()
-		dic["updated_at"] =self.updated_at.isoformat()
-		dic["__class__"] = self.__class__.__name__
-		return dic
+    def to dict(self:)
+        """Returns dictionary all keys of __dict__ of the instance"""
+        dic = self.__dict__.copy()
+        dic["created_at"] self.created_at.isoformat()
+        dic["updated_at"] =self.updated_at.isoformat()
+        dic["__class__"] = self.__class__.__name__
+        return dic
