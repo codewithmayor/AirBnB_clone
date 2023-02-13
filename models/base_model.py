@@ -1,11 +1,17 @@
 #!/usr/bin/python3
-"""This modules defines the parent class to all classes in our hbnb clone"""
-from uuid import uuid4
+"""Base Model Module """
+import uuid
 from datetime import datetime
 
+
 class BaseModel:
-    """A parent class for all hbnb models"""
+    """Base Model Class
+        The base model class is the base for
+        all other classes
+    """
+
     def __init__(self, *args, **kwargs):
+
         """Instantiates a new model"""
         self.id = str(uuid4())
         self.created_at = datetime.utcnow()
@@ -23,21 +29,53 @@ class BaseModel:
                 if "__class__" not in key:
                     setattr(self, key, val)
 
+        """Constructor for baseModel"""
+
+        if len(kwargs) == 0:
+            from models import storage
+
+            self.id = str(uuid.uuid4())
+            self.created_at = datetime.now()
+            self.updated_at = datetime.now()
+            storage.new(self)
+        else:
+            for key, value in kwargs.items():
+                # Don't copy __class__ attribute
+                if key == "__class__":
+                    continue
+
+                # Set created_at and updated_at to instances of datetime
+                if key in ["created_at", "updated_at"]:
+                    self.__setattr__(key, datetime.fromisoformat(value))
+                    continue
+
+                self.__setattr__(key, value)
+
+
     def __str__(self):
-        """Returns user-friendly string version of attributes"""
-        dictt = self.to_dict()
-        cls = str(type(self)).split('.')[-1].split('\'')[0]
-        return "[{:s}] ({:s}) {}".format(cls, self.id, dictt)
+        """String representation of object instance"""
+        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
 
     def save(self):
         """Updates the current time and to file storage"""
         self.updated_at = datetime.utcnow()
 		models.storage.save()
+        """Save function
+        Updates the update_at instance attribute
+        """
+        from models import storage
+
+        self.updated_at = datetime.now()
+        storage.save()
 
     def to_dict(self):
-        """Returns dictionary all keys of __dict__ of the instance"""
-        dic = self.__dict__.copy()
-        dic["created_at"] = self.created_at.isoformat()
-        dic["updated_at"] = self.updated_at.isoformat()
-        dic["__class__"] = self.__class__.__name__
-        return dic
+        """to_dict function
+        Returns a dictionary containing all keys/values of
+        __dict__ of the instance
+        """
+        new_dict = self.__dict__.copy()
+        new_dict["updated_at"] = new_dict["updated_at"].isoformat()
+        new_dict["created_at"] = new_dict["created_at"].isoformat()
+        new_dict["__class__"] = self.__class__.__name__
+
+        return new_dict
