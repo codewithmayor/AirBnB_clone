@@ -1,159 +1,193 @@
 #!/usr/bin/python3
-"""Test module for user model"""
-
-from models.user import User
-from datetime import datetime
+"""Defines unittests for models/user.py.
+Unittest classes:
+    TestUser_instantiation
+    TestUser_save
+    TestUser_to_dict
+"""
+import os
+import models
 import unittest
+from datetime import datetime
+from time import sleep
+from models.user import User
 
 
-class TestUser(unittest.TestCase):
-    """Test module for user class"""
+class TestUser_instantiation(unittest.TestCase):
+    """Unittests for testing instantiation of the User class."""
 
-    def test_attributes(self):
-        """
-        Test that public attributes are set and are of
-        the right type
-        """
-        user = User()
+    def test_no_args_instantiates(self):
+        self.assertEqual(User, type(User()))
 
-        self.assertIsInstance(user, User)
-        self.assertIsInstance(user.created_at, datetime)
-        self.assertIsInstance(user.updated_at, datetime)
-        self.assertIsInstance(user.id, str)
+    def test_new_instance_stored_in_objects(self):
+        self.assertIn(User(), models.storage.all().values())
 
-        self.assertEqual(len(user.id), 36)
+    def test_id_is_public_str(self):
+        self.assertEqual(str, type(User().id))
 
-    def test_save(self):
-        """
-        Test that save function updates updated_at
-        """
-        user = User()
+    def test_created_at_is_public_datetime(self):
+        self.assertEqual(datetime, type(User().created_at))
 
-        last_updated = user.updated_at
-        user.save()
+    def test_updated_at_is_public_datetime(self):
+        self.assertEqual(datetime, type(User().updated_at))
 
-        self.assertIsInstance(user.updated_at, datetime)
-        self.assertNotEqual(user.updated_at, last_updated)
+    def test_email_is_public_str(self):
+        self.assertEqual(str, type(User.email))
 
-    def test_to_dict(self):
-        """
-        Test that to_dict function generates the expected python
-        dictionary
-        """
-        user = User()
-        user_dict = user.to_dict()
+    def test_password_is_public_str(self):
+        self.assertEqual(str, type(User.password))
 
-        self.assertIsInstance(user_dict, dict)
-        self.assertEqual(user_dict["created_at"], user.created_at.isoformat())
-        self.assertEqual(user_dict["updated_at"], user.updated_at.isoformat())
-        self.assertEqual(user_dict["id"], user.id)
-        self.assertEqual(user_dict["__class__"], "User")
+    def test_first_name_is_public_str(self):
+        self.assertEqual(str, type(User.first_name))
 
-    def test_create_from_dict(self):
-        """
-        Test that a new instance is successfully created from
-        a dictionary using kwargs
-        """
+    def test_last_name_is_public_str(self):
+        self.assertEqual(str, type(User.last_name))
 
-        user = User()
-        user.password = "root"
-        user.last_name = "Ola"
-        user.first_name = "Damiloju"
-        user.email = "test@gmail.com"
-        user_dict = user.to_dict()
+    def test_two_users_unique_ids(self):
+        us1 = User()
+        us2 = User()
+        self.assertNotEqual(us1.id, us2.id)
 
-        new_user = User(**user_dict)
+    def test_two_users_different_created_at(self):
+        us1 = User()
+        sleep(0.05)
+        us2 = User()
+        self.assertLess(us1.created_at, us2.created_at)
 
-        self.assertEqual(user.created_at, new_user.created_at)
-        self.assertEqual(user.id, new_user.id)
-        self.assertEqual(user.created_at, new_user.created_at)
-        self.assertEqual(user.created_at, new_user.created_at)
-        self.assertEqual(new_user.first_name, "Damiloju")
-        self.assertEqual(new_user.last_name, "Ola")
-        self.assertEqual(new_user.email, "test@gmail.com")
-        self.assertEqual(new_user.password, "root")
-        self.assertEqual(str(user), str(new_user))
+    def test_two_users_different_updated_at(self):
+        us1 = User()
+        sleep(0.05)
+        us2 = User()
+        self.assertLess(us1.updated_at, us2.updated_at)
 
-    def test_ignore_args(self):
-        """
-        Test that args supplied when creating a
-        new instance are ignored
-        """
+    def test_str_representation(self):
+        dt = datetime.today()
+        dt_repr = repr(dt)
+        us = User()
+        us.id = "123456"
+        us.created_at = us.updated_at = dt
+        usstr = us.__str__()
+        self.assertIn("[User] (123456)", usstr)
+        self.assertIn("'id': '123456'", usstr)
+        self.assertIn("'created_at': " + dt_repr, usstr)
+        self.assertIn("'updated_at': " + dt_repr, usstr)
 
-        user = User()
-        user_dict = user.to_dict()
+    def test_args_unused(self):
+        us = User(None)
+        self.assertNotIn(None, us.__dict__.values())
 
-        new_user = User("hello", **user_dict)
+    def test_instantiation_with_kwargs(self):
+        dt = datetime.today()
+        dt_iso = dt.isoformat()
+        us = User(id="345", created_at=dt_iso, updated_at=dt_iso)
+        self.assertEqual(us.id, "345")
+        self.assertEqual(us.created_at, dt)
+        self.assertEqual(us.updated_at, dt)
 
-        self.assertEqual(user.created_at, new_user.created_at)
-        self.assertEqual(user.id, new_user.id)
-        self.assertEqual(user.created_at, new_user.created_at)
+    def test_instantiation_with_None_kwargs(self):
+        with self.assertRaises(TypeError):
+            User(id=None, created_at=None, updated_at=None)
 
-    def test_copy_all_dict_keys(self):
-        """
-        Test that all dictionary keys are
-        copied to the new object including extra keys
-        """
 
-        user = User()
-        user.password = "root"
-        user.last_name = "Ola"
-        user.first_name = "Damiloju"
-        user.email = "test@gmail.com"
+class TestUser_save(unittest.TestCase):
+    """Unittests for testing save method of the  class."""
 
-        base_dict = user.to_dict()
+    @classmethod
+    def setUp(self):
+        try:
+            os.rename("file.json", "tmp")
+        except IOError:
+            pass
 
-        new_user = User(**base_dict)
+    def tearDown(self):
+        try:
+            os.remove("file.json")
+        except IOError:
+            pass
+        try:
+            os.rename("tmp", "file.json")
+        except IOError:
+            pass
 
-        self.assertEqual(user.created_at, new_user.created_at)
-        self.assertEqual(user.id, new_user.id)
-        self.assertEqual(new_user.first_name, "Damiloju")
-        self.assertEqual(new_user.last_name, "Ola")
-        self.assertEqual(new_user.password, "root")
-        self.assertEqual(new_user.email, "test@gmail.com")
-        self.assertEqual(user.created_at, new_user.created_at)
+    def test_one_save(self):
+        us = User()
+        sleep(0.05)
+        first_updated_at = us.updated_at
+        us.save()
+        self.assertLess(first_updated_at, us.updated_at)
 
-    def test_class_not_copied(self):
-        """
-        Test that the __class__ attribute from
-        the dictionary was not copied
-        """
+    def test_two_saves(self):
+        us = User()
+        sleep(0.05)
+        first_updated_at = us.updated_at
+        us.save()
+        second_updated_at = us.updated_at
+        self.assertLess(first_updated_at, second_updated_at)
+        sleep(0.05)
+        us.save()
+        self.assertLess(second_updated_at, us.updated_at)
 
-        user = User()
-        user_dict = user.to_dict()
-        user_dict["__class__"] = "MySomeClass"
+    def test_save_with_arg(self):
+        us = User()
+        with self.assertRaises(TypeError):
+            us.save(None)
 
-        new_user = User(**user_dict)
-        self.assertNotEqual(new_user.__class__.__name__,
-                            user_dict["__class__"])
+    def test_save_updates_file(self):
+        us = User()
+        us.save()
+        usid = "User." + us.id
+        with open("file.json", "r") as f:
+            self.assertIn(usid, f.read())
 
-    def test_missing_keys(self):
-        """
-        Test that an error is thrown when accessing attributes that weren't
-        set when creating from dictionary
-        """
 
-        user = User()
-        user_dict = {"id": "something"}
+class TestUser_to_dict(unittest.TestCase):
+    """Unittests for testing to_dict method of the User class."""
 
-        new_user = User(**user_dict)
+    def test_to_dict_type(self):
+        self.assertTrue(dict, type(User().to_dict()))
 
-        with self.assertRaises(Exception):
-            val = new_user.created_at
-            val = new_user.updated_at
+    def test_to_dict_contains_correct_keys(self):
+        us = User()
+        self.assertIn("id", us.to_dict())
+        self.assertIn("created_at", us.to_dict())
+        self.assertIn("updated_at", us.to_dict())
+        self.assertIn("__class__", us.to_dict())
 
-    def test_default_instance_attributes(self):
-        """
-        Test that default values for instance attributes
-        are set to the correct class attributes
-        """
+    def test_to_dict_contains_added_attributes(self):
+        us = User()
+        us.middle_name = "Holberton"
+        us.my_number = 98
+        self.assertEqual("Holberton", us.middle_name)
+        self.assertIn("my_number", us.to_dict())
 
-        user = User()
+    def test_to_dict_datetime_attributes_are_strs(self):
+        us = User()
+        us_dict = us.to_dict()
+        self.assertEqual(str, type(us_dict["id"]))
+        self.assertEqual(str, type(us_dict["created_at"]))
+        self.assertEqual(str, type(us_dict["updated_at"]))
 
-        self.assertEqual(user.first_name, "")
-        self.assertEqual(user.last_name, "")
-        self.assertEqual(user.password, "")
-        self.assertEqual(user.email, "")
+    def test_to_dict_output(self):
+        dt = datetime.today()
+        us = User()
+        us.id = "123456"
+        us.created_at = us.updated_at = dt
+        tdict = {
+            'id': '123456',
+            '__class__': 'User',
+            'created_at': dt.isoformat(),
+            'updated_at': dt.isoformat(),
+        }
+        self.assertDictEqual(us.to_dict(), tdict)
+
+    def test_contrast_to_dict_dunder_dict(self):
+        us = User()
+        self.assertNotEqual(us.to_dict(), us.__dict__)
+
+    def test_to_dict_with_arg(self):
+        us = User()
+        with self.assertRaises(TypeError):
+            us.to_dict(None)
 
 
 if __name__ == "__main__":
