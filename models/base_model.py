@@ -11,24 +11,6 @@ class BaseModel:
     """
 
     def __init__(self, *args, **kwargs):
-
-        """Instantiates a new model"""
-        self.id = str(uuid4())
-        self.created_at = datetime.utcnow()
-        self.updated_at = self.created_at
-		models.storage.new(self)
-
-        if kwargs:
-            for key, val in kwargs.items():
-                if key == "created_at":
-                    val = datetime.strptime(kwargs["created_at"],
-                                            "%Y-%m-%dT%H:%M:%S.%f")
-                if key == "updated_at":
-                    val = datetime.strptime(kwargs["updated_at"],
-                                            "%Y-%m-%dT%H:%M:%S.%f")
-                if "__class__" not in key:
-                    setattr(self, key, val)
-
         """Constructor for baseModel"""
 
         if len(kwargs) == 0:
@@ -51,15 +33,11 @@ class BaseModel:
 
                 self.__setattr__(key, value)
 
-
     def __str__(self):
         """String representation of object instance"""
         return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
 
     def save(self):
-        """Updates the current time and to file storage"""
-        self.updated_at = datetime.utcnow()
-		models.storage.save()
         """Save function
         Updates the update_at instance attribute
         """
